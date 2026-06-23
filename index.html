@@ -436,10 +436,7 @@ function renderHasilCekStatus(surat, riwayat) {
     var sembunyikan = Number(r.tahap) >= 5 && Number(r.tahap) <= 7;
     html += '<li><div class="t-label">' + badge(r.tahap, STAGE_LABELS[r.tahap]) + '</div>';
     html += '<div class="t-meta">' + fmtTanggal(r.waktu_aksi) + (r.keputusan ? ' &middot; ' + esc(r.keputusan) : '') + '</div>';
-    if (!sembunyikan && r.catatan) {
-  var catatanHtml = esc(r.catatan).replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--primary);text-decoration:underline;">$1 <i class="ti ti-external-link" style="font-size:12px;vertical-align:-1px;"></i></a>');
-  html += '<div class="t-note">' + catatanHtml + '</div>';
-}
+    if (!sembunyikan && r.catatan) html += '<div class="t-note">' + esc(r.catatan) + '</div>';
     html += '</li>';
   });
   html += '</ul></div>';
@@ -786,10 +783,7 @@ function buildDetailHtml(surat, riwayat) {
   riwayat.forEach(function(r) {
     html += '<li><div class="t-label">Tahap ' + r.tahap + ' &middot; ' + esc(r.nama_petugas) + ' (' + esc(r.role_petugas) + ')</div>';
     html += '<div class="t-meta">' + fmtTanggal(r.waktu_aksi) + ' &middot; ' + esc(r.keputusan) + (r.versi_telaahan ? ' &middot; versi ke-' + r.versi_telaahan : '') + '</div>';
-    if (r.catatan) {
-  var catatanHtml = esc(r.catatan).replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--primary);text-decoration:underline;">$1 <i class="ti ti-external-link" style="font-size:12px;vertical-align:-1px;"></i></a>');
-  html += '<div class="t-note">' + catatanHtml + '</div>';
-}
+    if (r.catatan) html += '<div class="t-note">' + esc(r.catatan) + '</div>';
     html += '</li>';
   });
   html += '</ul></div>';
