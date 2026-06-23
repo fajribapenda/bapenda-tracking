@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistem Tracking Berkas - Bapenda</title>
+
+  <!-- ============================================================
+       KONFIGURASI SUPABASE - GANTI DENGAN NILAI ANDA
+       Ambil dari: Supabase Dashboard > Settings > API
+  ============================================================ -->
+  <script>
+    var SUPABASE_URL = 'https://fmtcwrlpctsrtnskatax.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtdGN3cmxwY3RzcnRuc2thdGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxODMyOTksImV4cCI6MjA5Nzc1OTI5OX0.cvP8KxnOBEajflY8alTu0JYGec3d-9jKCDo9bnYYllU';
+  </script>
+
+  <style>
+    :root {
+      --primary: #1d4e6f;
+      --primary-dark: #143a52;
+      --accent: #c9912b;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #222b33;
+      --muted: #6b7785;
+      --border: #dfe4e9;
+      --success: #2f7d4f;
+      --danger: #b3402c;
+      --warning: #b3842c;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+    .hidden { display: none !important; }
+    a { color: var(--primary); text-decoration: none; }
+
+    /* ---------- Topbar ---------- */
+    .topbar {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .topbar .brand { font-weight: 600; font-size: 16px; }
+    .topbar .brand small { display: block; font-weight: 400; font-size: 12px; opacity: .8; }
+    .topbar button.link-btn {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.35);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .topbar button.link-btn:hover { background: rgba(255,255,255,.22); }
+
+    /* ---------- Container ---------- */
+    .container { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .card h2 { margin-top: 0; font-size: 18px; color: var(--primary-dark); }
+    .card h3 { font-size: 15px; color: var(--primary-dark); margin-bottom: 10px; }
+
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 7px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn.secondary { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+    .btn.danger { background: var(--danger); }
+    .btn.success { background: var(--success); }
+    .btn.small { padding: 5px 11px; font-size: 12px; margin-top: 0; }
+    .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+    .msg { padding: 10px 14px; border-radius: 7px; margin-top: 12px; font-size: 13px; }
+    .msg.error { background: #fbe4e0; color: var(--danger); border: 1px solid #e7b8ac; }
+    .msg.success { background: #e3f2e7; color: var(--success); border: 1px solid #b6dcc1; }
+    .msg.info { background: #e8f0f7; color: var(--primary); border: 1px solid #b3cde0; }
+
+    /* ---------- Badge ---------- */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge.s1, .badge.s2 { background: #e8eef5; color: var(--primary); }
+    .badge.s3, .badge.s4 { background: #fdf1de; color: var(--warning); }
+    .badge.s5, .badge.s6, .badge.s7 { background: #fcebe6; color: var(--danger); }
+    .badge.s8 { background: #eaf4ed; color: var(--success); }
+    .badge.s9 { background: #1d4e6f; color: #fff; }
+
+    /* ---------- Timeline ---------- */
+    .timeline { list-style: none; padding: 0; margin: 14px 0 0; }
+    .timeline li {
+      padding: 10px 0 10px 18px;
+      border-left: 2px solid var(--border);
+      position: relative;
+      margin-left: 6px;
+    }
+    .timeline li::before {
+      content: '';
+      position: absolute;
+      left: -7px; top: 14px;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .timeline li .t-label { font-weight: 600; font-size: 13px; }
+    .timeline li .t-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .timeline li .t-note { font-size: 13px; margin-top: 4px; background: #f5f7f9; padding: 8px; border-radius: 6px; }
+
+    /* ---------- Layout app ---------- */
+    .app-layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 230px;
+      background: var(--primary-dark);
+      color: #fff;
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+    .sidebar .brand { padding: 0 20px 18px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.15); margin-bottom: 12px; }
+    .sidebar .brand small { display: block; font-weight: 400; opacity: .7; font-size: 11px; margin-top: 3px; }
+    .sidebar .user-info { padding: 0 20px 16px; font-size: 12px; opacity: .85; border-bottom: 1px solid rgba(255,255,255,.15); margin-bottom: 10px; }
+    .sidebar nav button.nav-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #cfe0ee;
+      padding: 11px 20px;
+      cursor: pointer;
+      font-size: 13.5px;
+    }
+    .sidebar nav button.nav-item:hover, .sidebar nav button.nav-item.active { background: rgba(255,255,255,.12); color: #fff; }
+    .main-content { flex: 1; padding: 26px 32px; max-width: 1100px; }
+    .main-content h1 { font-size: 20px; color: var(--primary-dark); margin-top: 0; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table th { text-align: left; padding: 9px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; }
+    table td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    table tr:hover td { background: #fafbfc; }
+
+    .stat-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+    .stat-box { flex: 1; min-width: 140px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .stat-box .num { font-size: 26px; font-weight: 700; color: var(--primary-dark); }
+    .stat-box .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .toolbar > div { flex: 1; min-width: 160px; }
+    .toolbar label { margin: 0 0 4px; }
+
+    .receipt-print {
+      width: 280px; margin: 0 auto;
+      border: 1px dashed var(--border); padding: 16px;
+      text-align: center;
+      font-family: 'Courier New', monospace; font-size: 12px;
+    }
+    .receipt-print img { margin: 10px auto; display: block; }
+    .receipt-print hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 720px) {
+      .app-layout { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .main-content { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW 1: PUBLIK -->
+  <div id="view-public">
+    <div class="topbar">
+      <div class="brand">Sistem Tracking Berkas &amp; Disposisi Surat<small>Badan Pendapatan Daerah</small></div>
+      <button class="link-btn" onclick="showLogin()">Login Pegawai</button>
+    </div>
+    <div class="container">
+      <div class="card">
+        <h2>Cek Status Surat / Permohonan Anda</h2>
+        <p style="color:var(--muted);font-size:13px;">Masukkan nomor tracking (tercetak pada tanda terima Anda) beserta Nomor Objek Pajak (NOP) untuk melihat status terbaru.</p>
+        <label>Nomor Tracking</label>
+        <input type="text" id="cek-no-tracking" placeholder="contoh: TRK-2026-0001">
+        <label>NOP (Nomor Objek Pajak)</label>
+        <input type="text" id="cek-nop" placeholder="masukkan NOP sesuai SPPT">
+        <button class="btn" onclick="onCekStatus()" id="btn-cek-status">Cek Status</button>
+        <div id="cek-status-msg"></div>
+      </div>
+      <div id="cek-status-result"></div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: LOGIN -->
+  <div id="view-login" class="hidden">
+    <div class="topbar">
+      <div class="brand">Sistem Tracking Berkas &amp; Disposisi Surat<small>Badan Pendapatan Daerah</small></div>
+      <button class="link-btn" onclick="showPublic()">&larr; Kembali ke Cek Status</button>
+    </div>
+    <div class="container" style="max-width:400px;">
+      <div class="card">
+        <h2>Login Pegawai</h2>
+        <label>Username</label>
+        <input type="text" id="login-username" autocomplete="username">
+        <label>Password</label>
+        <input type="password" id="login-password" autocomplete="current-password">
+        <button class="btn" onclick="onLogin()" id="btn-login" style="width:100%;">Masuk</button>
+        <div id="login-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 3: APLIKASI -->
+  <div id="view-app" class="hidden">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="brand">Tracking Bapenda<small>Sistem Disposisi Surat</small></div>
+        <div class="user-info" id="sidebar-user-info"></div>
+        <nav id="sidebar-nav"></nav>
+      </div>
+      <div class="main-content" id="main-content"></div>
+    </div>
+  </div>
+
+<script>
+/* ================================================================
+   KONFIGURASI & KONSTAN
+================================================================ */
+var STAGE_LABELS = {
+  1: 'Surat diregistrasi, menunggu verifikasi Sekretaris Badan',
+  2: 'Sedang diverifikasi oleh Sekretaris Badan',
+  3: 'Didisposisikan ke Kepala Bidang',
+  4: 'Didisposisikan ke Kepala Sub Bidang',
+  5: 'Sedang disusun telaahan oleh Staf Sub Bidang',
+  6: 'Telaahan sedang direview Kepala Sub Bidang',
+  7: 'Telaahan sedang direview Kepala Bidang',
+  8: 'Disetujui - Surat Keputusan sedang disusun',
+  9: 'Surat Keputusan selesai, siap diambil di kantor'
+};
+
+var NAV_BY_ROLE = {
+  Admin:       [['dashboard','Ringkasan'],['registrasi','Registrasi Surat'],['tugas','Tugas Saya'],['rincian','Rincian Semua Berkas'],['users','Kelola Akun'],['konsistensi','Cek Konsistensi Bidang'],['password','Ganti Password']],
+  Sekretariat: [['dashboard','Ringkasan'],['registrasi','Registrasi Surat'],['rincian','Rincian Semua Berkas'],['password','Ganti Password']],
+  Sekban:      [['dashboard','Ringkasan'],['tugas','Tugas Verifikasi'],['rincian','Rincian Berkas'],['password','Ganti Password']],
+  Kabid:       [['dashboard','Ringkasan'],['tugas','Tugas Saya'],['rincian','Rincian Berkas Bidang'],['password','Ganti Password']],
+  Kasubid:     [['dashboard','Ringkasan'],['tugas','Tugas Saya'],['rincian','Rincian Berkas Sub Bidang'],['password','Ganti Password']],
+  Staf:        [['dashboard','Ringkasan'],['tugas','Tugas Saya'],['rincian','Rincian Berkas Sub Bidang'],['password','Ganti Password']]
+};
+
+var DAFTAR_TUJUAN_LAYANAN = ['Keberatan PBB','Permohonan Keringanan / Pengurangan PBB','Mutasi Objek Pajak','Permohonan Salinan / Duplikat SPPT','Pembetulan SPPT','Lainnya'];
+var DAFTAR_ROLE = ['Admin','Sekretariat','Sekban','Kabid','Kasubid','Staf'];
+var SESSION_KEY = 'bapenda_session';
+
+var STATE = { session: null, masterBidang: [] };
+
+/* ================================================================
+   SUPABASE API WRAPPER
+================================================================ */
+function sbFetch(path, options) {
+  options = options || {};
+  var headers = Object.assign({
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  }, options.headers || {});
+
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, { headers: headers }))
+    .then(function(r) {
+      if (r.status === 204) return [];
+      return r.json().then(function(data) {
+        if (!r.ok) throw new Error((data && data.message) || ('HTTP ' + r.status));
+        return data;
+      });
+    });
+}
+
+function sbGet(table, query) { return sbFetch(table + '?' + query); }
+function sbPost(table, body) { return sbFetch(table, { method: 'POST', body: JSON.stringify(body) }); }
+function sbPatch(table, query, body) { return sbFetch(table + '?' + query, { method: 'PATCH', body: JSON.stringify(body) }); }
+
+/* ================================================================
+   UTILITAS
+================================================================ */
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function fmtTanggal(d) {
+  if (!d) return '-';
+  var dt = new Date(d);
+  if (isNaN(dt.getTime())) return String(d);
+  return dt.toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function badge(tahap, label) {
+  return '<span class="badge s' + tahap + '">' + esc(label || STAGE_LABELS[tahap] || 'Tahap '+tahap) + '</span>';
+}
+function setBusy(btn, busy, normalText) {
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.innerHTML = busy ? '<span class="spinner"></span>Memproses...' : normalText;
+}
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  if (el) el.innerHTML = '<div class="msg ' + type + '">' + esc(text) + '</div>';
+}
+function clearMsg(id) { var el = document.getElementById(id); if (el) el.innerHTML = ''; }
+function uuid() { return 'xxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random()*16).toString(16); }).toUpperCase(); }
+function generateId(prefix) { return prefix + '-' + uuid(); }
+
+function hashPassword(password, salt) {
+  // SHA-256 via SubtleCrypto (async) - dipakai dalam konteks async saja
+  var str = password + salt;
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function(buf) {
+    return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+  });
+}
+
+/* ================================================================
+   SESSION
+================================================================ */
+function saveSession(data) {
+  STATE.session = data;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e) { return null; }
+}
+function clearSession() {
+  STATE.session = null;
+  localStorage.removeItem(SESSION_KEY);
+}
+
+/* ================================================================
+   VIEW SWITCHING
+================================================================ */
+function hideAll() {
+  ['view-public','view-login','view-app'].forEach(function(id) {
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+function showPublic() { hideAll(); document.getElementById('view-public').classList.remove('hidden'); }
+function showLogin()  { hideAll(); document.getElementById('view-login').classList.remove('hidden'); }
+function showAppShell() { hideAll(); document.getElementById('view-app').classList.remove('hidden'); }
+
+/* ================================================================
+   INIT
+================================================================ */
+window.addEventListener('DOMContentLoaded', function() {
+  var saved = loadSession();
+  if (saved && saved.token && saved.user) {
+    // Validasi session masih ada di DB
+    sbGet('sessions', 'token=eq.' + saved.token + '&expires_at=gt.' + new Date().toISOString() + '&select=token')
+      .then(function(rows) {
+        if (rows && rows.length) {
+          STATE.session = saved;
+          bootApp();
+        } else {
+          clearSession();
+          showPublic();
+        }
+      }).catch(function() { clearSession(); showPublic(); });
+  } else {
+    showPublic();
+  }
+});
+
+/* ================================================================
+   CEK STATUS PUBLIK
+================================================================ */
+function onCekStatus() {
+  clearMsg('cek-status-msg');
+  document.getElementById('cek-status-result').innerHTML = '';
+  var noTracking = document.getElementById('cek-no-tracking').value.trim().toUpperCase();
+  var nop = document.getElementById('cek-nop').value.trim();
+  if (!noTracking || !nop) { showMsg('cek-status-msg','Nomor tracking dan NOP wajib diisi.','error'); return; }
+  var btn = document.getElementById('btn-cek-status');
+  setBusy(btn, true, 'Cek Status');
+
+  sbGet('surat', 'no_tracking=eq.' + encodeURIComponent(noTracking) + '&nop=eq.' + encodeURIComponent(nop))
+    .then(function(rows) {
+      if (!rows || !rows.length) throw new Error('Data tidak ditemukan. Periksa kembali nomor tracking dan NOP Anda.');
+      var surat = rows[0];
+      return sbGet('riwayat_disposisi', 'id_surat=eq.' + surat.id_surat + '&order=waktu_aksi.asc').then(function(riwayat) {
+        setBusy(btn, false, 'Cek Status');
+        renderHasilCekStatus(surat, riwayat || []);
+      });
+    }).catch(function(err) {
+      setBusy(btn, false, 'Cek Status');
+      showMsg('cek-status-msg', err.message || String(err), 'error');
+    });
+}
+
+function renderHasilCekStatus(surat, riwayat) {
+  var html = '<div class="card">';
+  html += '<h3>' + esc(surat.nama_pemohon) + ' &mdash; ' + esc(surat.no_tracking) + '</h3>';
+  html += '<p>Perihal: ' + esc(surat.tujuan_layanan) + '<br>Tanggal masuk: ' + fmtTanggal(surat.tanggal_masuk) + '</p>';
+  html += '<p>Status saat ini: ' + badge(surat.tahap_saat_ini, surat.status_saat_ini) + '</p>';
+  if (Number(surat.tahap_saat_ini) === 9) {
+    html += '<div class="msg success">Surat Keputusan (SK) Anda telah selesai dan dapat diambil langsung di kantor Bapenda.</div>';
+  }
+  html += '<h3 style="margin-top:18px;">Riwayat Proses</h3><ul class="timeline">';
+  riwayat.forEach(function(r) {
+    var sembunyikan = Number(r.tahap) >= 5 && Number(r.tahap) <= 7;
+    html += '<li><div class="t-label">' + badge(r.tahap, STAGE_LABELS[r.tahap]) + '</div>';
+    html += '<div class="t-meta">' + fmtTanggal(r.waktu_aksi) + (r.keputusan ? ' &middot; ' + esc(r.keputusan) : '') + '</div>';
+    if (!sembunyikan && r.catatan) html += '<div class="t-note">' + esc(r.catatan) + '</div>';
+    html += '</li>';
+  });
+  html += '</ul></div>';
+  document.getElementById('cek-status-result').innerHTML = html;
+}
+
+/* ================================================================
+   LOGIN / LOGOUT
+================================================================ */
+function onLogin() {
+  clearMsg('login-msg');
+  var username = document.getElementById('login-username').value.trim();
+  var password = document.getElementById('login-password').value;
+  if (!username || !password) { showMsg('login-msg','Username dan password wajib diisi.','error'); return; }
+  var btn = document.getElementById('btn-login');
+  setBusy(btn, true, 'Masuk');
+
+  sbGet('users', 'username=eq.' + encodeURIComponent(username) + '&status_aktif=eq.Aktif')
+    .then(function(rows) {
+      if (!rows || !rows.length) throw new Error('Username atau password salah.');
+      var user = rows[0];
+      return hashPassword(password, user.password_salt).then(function(hash) {
+        if (hash !== user.password_hash) throw new Error('Username atau password salah.');
+        var token = generateId('TOK');
+        var sessionData = { id_user: user.id_user, nama: user.nama, username: user.username, role: user.role, bidang_sub_bidang: user.bidang_sub_bidang || '' };
+        var expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+        return sbPost('sessions', { token: token, id_user: user.id_user, session_data: sessionData, expires_at: expiresAt })
+          .then(function() {
+            setBusy(btn, false, 'Masuk');
+            saveSession({ token: token, user: sessionData });
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            bootApp();
+          });
+      });
+    }).catch(function(err) {
+      setBusy(btn, false, 'Masuk');
+      showMsg('login-msg', err.message || String(err), 'error');
+    });
+}
+
+function doLogoutClick() {
+  if (STATE.session && STATE.session.token) {
+    sbPatch('sessions', 'token=eq.' + STATE.session.token, { expires_at: new Date().toISOString() }).catch(function(){});
+  }
+  clearSession();
+  showPublic();
+}
+
+/* ================================================================
+   BOOT APLIKASI
+================================================================ */
+function bootApp() {
+  var user = STATE.session.user;
+  showAppShell();
+  document.getElementById('sidebar-user-info').innerHTML =
+    esc(user.nama) + '<br><strong>' + esc(user.role) + '</strong>' +
+    (user.bidang_sub_bidang ? '<br>' + esc(user.bidang_sub_bidang) : '');
+
+  var navItems = NAV_BY_ROLE[user.role] || [['dashboard','Ringkasan'],['password','Ganti Password']];
+  var nav = navItems.map(function(item) {
+    return '<button class="nav-item" data-view="' + item[0] + '" onclick="navTo(\'' + item[0] + '\')">' + esc(item[1]) + '</button>';
+  }).join('');
+  nav += '<button class="nav-item" onclick="doLogoutClick()" style="margin-top:10px;border-top:1px solid rgba(255,255,255,.15);">Keluar</button>';
+  document.getElementById('sidebar-nav').innerHTML = nav;
+
+  sbGet('master_bidang', 'select=bidang,sub_bidang&order=bidang.asc')
+    .then(function(rows) { STATE.masterBidang = rows || []; })
+    .catch(function() { STATE.masterBidang = []; });
+
+  navTo('dashboard');
+}
+
+function navTo(view, param) {
+  document.querySelectorAll('.nav-item').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-view') === view);
+  });
+  var map = {
+    dashboard: renderDashboard, registrasi: renderRegistrasi, tugas: renderTugas,
+    rincian: renderRincian, users: renderUsers, konsistensi: renderKonsistensi,
+    password: renderGantiPassword, detail: function() { renderDetail(param); }
+  };
+  (map[view] || renderDashboard)();
+}
+
+/* ================================================================
+   DASHBOARD
+================================================================ */
+function renderDashboard() {
+  var user = STATE.session.user;
+  document.getElementById('main-content').innerHTML = '<h1>Ringkasan Berkas</h1><div id="dash-body">Memuat data...</div>';
+
+  var q = buildSuratQuery_(user);
+  sbGet('surat', q + '&select=tahap_saat_ini,tujuan_layanan').then(function(all) {
+    all = all || [];
+    var perJenis = {}, perTahap = {}, selesai = 0;
+    all.forEach(function(s) {
+      perJenis[s.tujuan_layanan] = (perJenis[s.tujuan_layanan] || 0) + 1;
+      perTahap[s.tahap_saat_ini] = (perTahap[s.tahap_saat_ini] || 0) + 1;
+      if (Number(s.tahap_saat_ini) === 9) selesai++;
+    });
+
+    var html = '<div class="stat-grid">';
+    html += statBox(all.length, 'Total Berkas');
+    html += statBox(all.length - selesai, 'Dalam Proses');
+    html += statBox(selesai, 'Selesai (SK Siap Diambil)');
+    html += '</div>';
+    html += '<div class="card"><h3>Berkas per Jenis Layanan</h3><table><tr><th>Jenis Layanan</th><th>Jumlah</th></tr>';
+    Object.keys(perJenis).forEach(function(k) { html += '<tr><td>' + esc(k) + '</td><td>' + perJenis[k] + '</td></tr>'; });
+    html += '</table></div>';
+    html += '<div class="card"><h3>Progress per Tahap</h3><table><tr><th>Tahap</th><th>Jumlah</th></tr>';
+    for (var t = 1; t <= 9; t++) {
+      if (perTahap[t]) html += '<tr><td>' + badge(t, STAGE_LABELS[t]) + '</td><td>' + perTahap[t] + '</td></tr>';
+    }
+    html += '</table></div>';
+    document.getElementById('dash-body').innerHTML = html;
+  }).catch(function(err) {
+    document.getElementById('dash-body').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>';
+  });
+}
+function statBox(num, lbl) {
+  return '<div class="stat-box"><div class="num">' + num + '</div><div class="lbl">' + esc(lbl) + '</div></div>';
+}
+
+// Membangun query filter berdasarkan role
+function buildSuratQuery_(user) {
+  if (user.role === 'Kabid') return 'bidang_tujuan=eq.' + encodeURIComponent(user.bidang_sub_bidang);
+  if (user.role === 'Kasubid' || user.role === 'Staf') return 'sub_bidang_tujuan=eq.' + encodeURIComponent(user.bidang_sub_bidang);
+  return 'select=*'; // Admin, Sekretariat, Sekban = semua
+}
+
+/* ================================================================
+   REGISTRASI SURAT
+================================================================ */
+function renderRegistrasi() {
+  var opsi = DAFTAR_TUJUAN_LAYANAN.map(function(o) { return '<option value="' + esc(o) + '">' + esc(o) + '</option>'; }).join('');
+  document.getElementById('main-content').innerHTML =
+    '<h1>Registrasi Surat Masuk</h1>' +
+    '<div class="card"><label>Nama Pemohon *</label><input id="r-nama">' +
+    '<label>NOP *</label><input id="r-nop">' +
+    '<label>Alamat *</label><textarea id="r-alamat"></textarea>' +
+    '<label>No. HP / WhatsApp *</label><input id="r-hp">' +
+    '<label>Tujuan Surat / Jenis Layanan *</label><select id="r-tujuan" onchange="toggleLainnya()">' + opsi + '</select>' +
+    '<div id="r-tujuan-lainnya-wrap" class="hidden"><label>Sebutkan</label><input id="r-tujuan-lainnya"></div>' +
+    '<label>Perihal / Keterangan Tambahan</label><textarea id="r-perihal"></textarea>' +
+    '<label>Tanggal Surat Asal</label><input type="date" id="r-tgl-asal">' +
+    '<label>Jumlah Lampiran</label><input type="number" id="r-jumlah-lampiran" min="0">' +
+    '<button class="btn" onclick="onRegistrasiSubmit()" id="btn-registrasi">Simpan &amp; Terbitkan Nomor Tracking</button>' +
+    '<div id="registrasi-msg"></div></div><div id="registrasi-result"></div>';
+}
+function toggleLainnya() {
+  var sel = document.getElementById('r-tujuan');
+  document.getElementById('r-tujuan-lainnya-wrap').classList.toggle('hidden', sel.value !== 'Lainnya');
+}
+
+function generateTrackingNumber() {
+  var year = new Date().getFullYear();
+  var prefix = 'TRK-' + year + '-';
+  return sbGet('surat', 'no_tracking=like.' + prefix + '*&select=no_tracking&order=no_tracking.desc&limit=1')
+    .then(function(rows) {
+      var maxSeq = 0;
+      if (rows && rows.length) {
+        var last = rows[0].no_tracking;
+        var seq = parseInt(last.substring(prefix.length), 10);
+        if (!isNaN(seq)) maxSeq = seq;
+      }
+      return prefix + ('0000' + (maxSeq + 1)).slice(-4);
+    });
+}
+
+function onRegistrasiSubmit() {
+  clearMsg('registrasi-msg');
+  var tujuan = document.getElementById('r-tujuan').value;
+  if (tujuan === 'Lainnya') tujuan = document.getElementById('r-tujuan-lainnya').value || 'Lainnya';
+  var data = {
+    nama: document.getElementById('r-nama').value.trim(),
+    nop: document.getElementById('r-nop').value.trim(),
+    alamat: document.getElementById('r-alamat').value.trim(),
+    hp: document.getElementById('r-hp').value.trim(),
+    tujuan: tujuan
+  };
+  if (!data.nama || !data.nop || !data.alamat || !data.hp || !data.tujuan) {
+    showMsg('registrasi-msg','Mohon lengkapi semua field wajib.','error'); return;
+  }
+  var btn = document.getElementById('btn-registrasi');
+  setBusy(btn, true, 'Simpan &amp; Terbitkan Nomor Tracking');
+
+  generateTrackingNumber().then(function(noTracking) {
+    var idSurat = generateId('SRT');
+    var now = new Date().toISOString();
+    var perihal = document.getElementById('r-perihal').value.trim();
+    var surat = {
+      id_surat: idSurat, no_tracking: noTracking,
+      nama_pemohon: data.nama, nop: data.nop, alamat: data.alamat, no_hp: data.hp,
+      tujuan_layanan: data.tujuan, perihal: perihal,
+      tanggal_surat_asal: document.getElementById('r-tgl-asal').value || '',
+      jumlah_lampiran: document.getElementById('r-jumlah-lampiran').value || '',
+      tanggal_masuk: now, tahap_saat_ini: 2,
+      status_saat_ini: STAGE_LABELS[2], bidang_tujuan: '', sub_bidang_tujuan: '', link_sk: ''
+    };
+    return sbPost('surat', surat).then(function() {
+      return sbPost('riwayat_disposisi', {
+        id_riwayat: generateId('RWY'), id_surat: idSurat, tahap: 1,
+        nama_petugas: STATE.session.user.nama, role_petugas: STATE.session.user.role,
+        waktu_aksi: now, keputusan: 'Registrasi', catatan: 'Surat diterima dan diregistrasi di Front Office.', versi_telaahan: ''
+      });
+    }).then(function() {
+      setBusy(btn, false, 'Simpan &amp; Terbitkan Nomor Tracking');
+      renderTandaTerima({ no_tracking: noTracking, nama_pemohon: data.nama, perihal: perihal || data.tujuan, tanggal_masuk: now, id_surat: idSurat });
+    });
+  }).catch(function(err) {
+    setBusy(btn, false, 'Simpan &amp; Terbitkan Nomor Tracking');
+    showMsg('registrasi-msg', err.message || String(err), 'error');
+  });
+}
+
+function renderTandaTerima(res) {
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(res.no_tracking);
+  var html = '<div class="card"><div class="msg success">Surat berhasil diregistrasi. Nomor tracking: <strong>' + esc(res.no_tracking) + '</strong></div>';
+  html += '<div class="receipt-print" id="receipt-content">';
+  html += '<strong>BAPENDA</strong><br>TANDA TERIMA SURAT<hr>';
+  html += 'No. Tracking:<br><strong>' + esc(res.no_tracking) + '</strong><hr>';
+  html += 'Nama: ' + esc(res.nama_pemohon) + '<br>Perihal: ' + esc(res.perihal) + '<br>';
+  html += 'Tanggal: ' + fmtTanggal(res.tanggal_masuk) + '<hr>';
+  html += '<img src="' + qrUrl + '" width="140" height="140"><br>';
+  html += 'Pindai QR atau buka halaman utama,<br>masukkan No. Tracking + NOP untuk cek status.';
+  html += '</div>';
+  html += '<button class="btn secondary" style="margin-top:16px;" onclick="cetakTandaTerima()">Cetak Tanda Terima</button></div>';
+  document.getElementById('registrasi-result').innerHTML = html;
+}
+
+function cetakTandaTerima() {
+  var content = document.getElementById('receipt-content').outerHTML;
+  var w = window.open('','_blank','width=380,height=600');
+  w.document.write('<html><head><title>Tanda Terima</title><style>body{font-family:monospace;padding:10px;}</style></head><body>' + content + '</body></html>');
+  w.document.close(); w.focus();
+  setTimeout(function() { w.print(); }, 300);
+}
+
+/* ================================================================
+   TUGAS SAYA
+================================================================ */
+function renderTugas() {
+  document.getElementById('main-content').innerHTML = '<h1>Tugas Saya</h1><div id="tugas-body">Memuat data...</div>';
+  var user = STATE.session.user;
+  var q = buildTugasQuery_(user);
+  sbGet('surat', q + '&order=tanggal_masuk.desc').then(function(rows) {
+    document.getElementById('tugas-body').innerHTML = tabelSurat(rows || [], true);
+  }).catch(function(err) {
+    document.getElementById('tugas-body').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>';
+  });
+}
+
+function buildTugasQuery_(user) {
+  var role = user.role;
+  var bid = encodeURIComponent(user.bidang_sub_bidang || '');
+  if (role === 'Admin' || role === 'Sekretariat') return 'tahap_saat_ini=lt.9';
+  if (role === 'Sekban') return 'tahap_saat_ini=eq.2';
+  if (role === 'Kabid') return 'or=(tahap_saat_ini.eq.3,tahap_saat_ini.eq.7)&bidang_tujuan=eq.' + bid;
+  if (role === 'Kasubid') return 'or=(tahap_saat_ini.eq.4,tahap_saat_ini.eq.6)&sub_bidang_tujuan=eq.' + bid;
+  if (role === 'Staf') return 'or=(tahap_saat_ini.eq.5,tahap_saat_ini.eq.8)&sub_bidang_tujuan=eq.' + bid;
+  return 'tahap_saat_ini=eq.0'; // fallback kosong
+}
+
+function tabelSurat(rows, showAksi) {
+  if (!rows.length) return '<div class="card">Tidak ada berkas untuk ditampilkan.</div>';
+  var html = '<div class="card"><table><tr><th>No. Tracking</th><th>Nama Pemohon</th><th>Perihal</th><th>Tanggal Masuk</th><th>Status</th>' + (showAksi ? '<th></th>' : '') + '</tr>';
+  rows.forEach(function(s) {
+    html += '<tr><td>' + esc(s.no_tracking) + '</td><td>' + esc(s.nama_pemohon) + '</td><td>' + esc(s.tujuan_layanan) + '</td>';
+    html += '<td>' + fmtTanggal(s.tanggal_masuk) + '</td><td>' + badge(s.tahap_saat_ini, s.status_saat_ini) + '</td>';
+    if (showAksi) html += '<td><button class="btn small" onclick="navTo(\'detail\',\'' + s.id_surat + '\')">Proses</button></td>';
+    html += '</tr>';
+  });
+  return html + '</table></div>';
+}
+
+/* ================================================================
+   RINCIAN SEMUA BERKAS
+================================================================ */
+function renderRincian() {
+  document.getElementById('main-content').innerHTML =
+    '<h1>Rincian Berkas</h1>' +
+    '<div class="card"><div class="toolbar">' +
+    '<div><label>Cari (nama / no. tracking / NOP)</label><input id="f-keyword" oninput="onRincianFilterChange()"></div>' +
+    '<div><label>Filter Tahap</label><select id="f-tahap" onchange="onRincianFilterChange()"><option value="">Semua Tahap</option>' +
+    [1,2,3,4,5,6,7,8,9].map(function(t){return '<option value="'+t+'">Tahap '+t+'</option>';}).join('') +
+    '</select></div></div></div><div id="rincian-body">Memuat data...</div>';
+  onRincianFilterChange();
+}
+
+function onRincianFilterChange() {
+  var user = STATE.session.user;
+  var baseQ = '';
+  if (user.role === 'Kabid') baseQ = '&bidang_tujuan=eq.' + encodeURIComponent(user.bidang_sub_bidang);
+  else if (user.role === 'Kasubid' || user.role === 'Staf') baseQ = '&sub_bidang_tujuan=eq.' + encodeURIComponent(user.bidang_sub_bidang);
+
+  var tahap = document.getElementById('f-tahap').value;
+  var tahapQ = tahap ? '&tahap_saat_ini=eq.' + tahap : '';
+  var q = 'order=tanggal_masuk.desc' + baseQ + tahapQ;
+
+  sbGet('surat', q).then(function(rows) {
+    var kw = document.getElementById('f-keyword').value.trim().toLowerCase();
+    var filtered = (rows || []).filter(function(s) {
+      if (!kw) return true;
+      return String(s.nama_pemohon).toLowerCase().includes(kw) ||
+             String(s.no_tracking).toLowerCase().includes(kw) ||
+             String(s.nop).toLowerCase().includes(kw);
+    });
+    document.getElementById('rincian-body').innerHTML = tabelSurat(filtered, true);
+  }).catch(function(err) {
+    document.getElementById('rincian-body').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>';
+  });
+}
+
+/* ================================================================
+   DETAIL SURAT + FORM AKSI
+================================================================ */
+function renderDetail(idSurat) {
+  document.getElementById('main-content').innerHTML = '<h1>Detail Berkas</h1><div id="detail-body">Memuat data...</div>';
+  Promise.all([
+    sbGet('surat', 'id_surat=eq.' + idSurat),
+    sbGet('riwayat_disposisi', 'id_surat=eq.' + idSurat + '&order=waktu_aksi.asc')
+  ]).then(function(results) {
+    var surat = results[0][0];
+    var riwayat = results[1] || [];
+    if (!surat) throw new Error('Surat tidak ditemukan.');
+    document.getElementById('detail-body').innerHTML = buildDetailHtml(surat, riwayat);
+  }).catch(function(err) {
+    document.getElementById('detail-body').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>';
+  });
+}
+
+function buildDetailHtml(surat, riwayat) {
+  var html = '<div class="card">';
+  html += '<button class="btn secondary small" onclick="navTo(\'tugas\')" style="margin-bottom:12px;">&larr; Kembali</button>';
+  html += '<h3>' + esc(surat.no_tracking) + ' &mdash; ' + esc(surat.nama_pemohon) + '</h3>';
+  html += '<p>NOP: ' + esc(surat.nop) + '<br>Alamat: ' + esc(surat.alamat) + '<br>No. HP: ' + esc(surat.no_hp) + '</p>';
+  html += '<p>Tujuan Layanan: ' + esc(surat.tujuan_layanan) + '<br>Perihal: ' + esc(surat.perihal || '-') + '</p>';
+  html += '<p>Status: ' + badge(surat.tahap_saat_ini, surat.status_saat_ini) + '</p>';
+  if (surat.link_sk) html += '<p><a href="' + esc(surat.link_sk) + '" target="_blank">Lihat berkas SK</a></p>';
+  html += '</div>';
+  html += '<div class="card" id="aksi-wrap">' + buildFormAksi(surat) + '</div>';
+  html += '<div class="card"><h3>Riwayat Lengkap</h3><ul class="timeline">';
+  riwayat.forEach(function(r) {
+    html += '<li><div class="t-label">Tahap ' + r.tahap + ' &middot; ' + esc(r.nama_petugas) + ' (' + esc(r.role_petugas) + ')</div>';
+    html += '<div class="t-meta">' + fmtTanggal(r.waktu_aksi) + ' &middot; ' + esc(r.keputusan) + (r.versi_telaahan ? ' &middot; versi ke-' + r.versi_telaahan : '') + '</div>';
+    if (r.catatan) html += '<div class="t-note">' + esc(r.catatan) + '</div>';
+    html += '</li>';
+  });
+  html += '</ul></div>';
+  return html;
+}
+
+function buildFormAksi(surat) {
+  var role = STATE.session.user.role;
+  var tahap = Number(surat.tahap_saat_ini);
+  var isAdmin = role === 'Admin';
+  var id = surat.id_surat;
+
+  if (tahap === 2 && (role === 'Sekban' || isAdmin)) {
+    var opts = uniqueBidang_().map(function(b) { return '<option value="' + esc(b) + '">' + esc(b) + '</option>'; }).join('');
+    return '<h3>Verifikasi &amp; Disposisi ke Bidang</h3><label>Pilih Bidang Tujuan</label><select id="aksi-bidang">' + opts + '</select><label>Catatan (opsional)</label><textarea id="aksi-catatan"></textarea><button class="btn" onclick="aksiVerifikasiSekban(\'' + id + '\')">Teruskan ke Kepala Bidang</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 3 && (role === 'Kabid' || isAdmin)) {
+    var opts2 = subBidangOf_(surat.bidang_tujuan).map(function(b) { return '<option value="' + esc(b) + '">' + esc(b) + '</option>'; }).join('');
+    return '<h3>Disposisi ke Sub Bidang</h3><label>Pilih Sub Bidang</label><select id="aksi-subbidang">' + opts2 + '</select><label>Catatan (opsional)</label><textarea id="aksi-catatan"></textarea><button class="btn" onclick="aksiDisposisiKabid(\'' + id + '\')">Teruskan ke Kepala Sub Bidang</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 4 && (role === 'Kasubid' || isAdmin)) {
+    return '<h3>Disposisi ke Staf</h3><label>Catatan (opsional)</label><textarea id="aksi-catatan"></textarea><button class="btn" onclick="aksiDisposisiKasubid(\'' + id + '\')">Teruskan ke Staf</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 5 && (role === 'Staf' || isAdmin)) {
+    return '<h3>Susun Telaahan</h3><label>Isi Telaahan</label><textarea id="aksi-telaahan" rows="6"></textarea><button class="btn" onclick="aksiSubmitTelaahan(\'' + id + '\')">Kirim Telaahan untuk Direview</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 6 && (role === 'Kasubid' || isAdmin)) {
+    return '<h3>Review Telaahan (Kepala Sub Bidang)</h3><label>Catatan</label><textarea id="aksi-catatan"></textarea><button class="btn success" onclick="aksiReview(\'' + id + '\',6,\'ACC\')">ACC - Teruskan ke Kepala Bidang</button> <button class="btn danger" onclick="aksiReview(\'' + id + '\',6,\'Tolak\')">Tolak - Kembalikan ke Staf</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 7 && (role === 'Kabid' || isAdmin)) {
+    return '<h3>Review Telaahan (Kepala Bidang)</h3><label>Catatan</label><textarea id="aksi-catatan"></textarea><button class="btn success" onclick="aksiReview(\'' + id + '\',7,\'ACC\')">ACC - Setujui, Lanjut Susun SK</button> <button class="btn danger" onclick="aksiReview(\'' + id + '\',7,\'Tolak\')">Tolak - Kembalikan ke Staf</button><div id="aksi-msg"></div>';
+  }
+  if (tahap === 8 && (role === 'Staf' || isAdmin)) {
+    return '<h3>Unggah Surat Keputusan (PDF)</h3><label>File SK</label><input type="file" id="aksi-file-sk" accept="application/pdf"><label>Atau link SK (Google Drive)</label><input type="text" id="aksi-link-sk" placeholder="https://drive.google.com/..."><button class="btn" onclick="aksiUploadSK(\'' + id + '\')">Selesaikan Proses</button><div id="aksi-msg"></div>';
+  }
+  return '<p style="color:var(--muted);">Tidak ada aksi yang dapat dilakukan oleh Anda pada tahap ini.</p>';
+}
+
+function uniqueBidang_() {
+  var set = {};
+  STATE.masterBidang.forEach(function(r) { if (r.bidang) set[r.bidang] = true; });
+  return Object.keys(set);
+}
+function subBidangOf_(bidang) {
+  return STATE.masterBidang.filter(function(r) { return r.bidang === bidang; }).map(function(r) { return r.sub_bidang; });
+}
+
+function logRiwayat_(idSurat, tahap, keputusan, catatan, versi) {
+  return sbPost('riwayat_disposisi', {
+    id_riwayat: generateId('RWY'), id_surat: idSurat, tahap: tahap,
+    nama_petugas: STATE.session.user.nama, role_petugas: STATE.session.user.role,
+    waktu_aksi: new Date().toISOString(), keputusan: keputusan, catatan: catatan || '', versi_telaahan: versi || ''
+  });
+}
+
+function afterAksiSukses_(idSurat, pesan) {
+  showMsg('aksi-msg', pesan, 'success');
+  setTimeout(function() { navTo('detail', idSurat); }, 800);
+}
+
+function aksiVerifikasiSekban(idSurat) {
+  clearMsg('aksi-msg');
+  var bidang = document.getElementById('aksi-bidang').value;
+  if (!bidang) { showMsg('aksi-msg','Pilih bidang tujuan.','error'); return; }
+  sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: 3, status_saat_ini: STAGE_LABELS[3], bidang_tujuan: bidang })
+    .then(function() { return logRiwayat_(idSurat, 2, 'Lanjut', document.getElementById('aksi-catatan').value); })
+    .then(function() { afterAksiSukses_(idSurat, 'Berhasil diteruskan ke Kepala Bidang.'); })
+    .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+}
+
+function aksiDisposisiKabid(idSurat) {
+  clearMsg('aksi-msg');
+  var sub = document.getElementById('aksi-subbidang').value;
+  if (!sub) { showMsg('aksi-msg','Pilih sub bidang tujuan.','error'); return; }
+  sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: 4, status_saat_ini: STAGE_LABELS[4], sub_bidang_tujuan: sub })
+    .then(function() { return logRiwayat_(idSurat, 3, 'Lanjut', document.getElementById('aksi-catatan').value); })
+    .then(function() { afterAksiSukses_(idSurat, 'Berhasil didisposisikan ke Kepala Sub Bidang.'); })
+    .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+}
+
+function aksiDisposisiKasubid(idSurat) {
+  clearMsg('aksi-msg');
+  sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: 5, status_saat_ini: STAGE_LABELS[5] })
+    .then(function() { return logRiwayat_(idSurat, 4, 'Lanjut', document.getElementById('aksi-catatan').value); })
+    .then(function() { afterAksiSukses_(idSurat, 'Berhasil didisposisikan ke Staf.'); })
+    .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+}
+
+function aksiSubmitTelaahan(idSurat) {
+  clearMsg('aksi-msg');
+  var isi = document.getElementById('aksi-telaahan').value.trim();
+  if (!isi) { showMsg('aksi-msg','Isi telaahan wajib diisi.','error'); return; }
+  // Hitung versi telaahan
+  sbGet('riwayat_disposisi', 'id_surat=eq.' + idSurat + '&tahap=eq.5&select=id_riwayat').then(function(rows) {
+    var versi = (rows ? rows.length : 0) + 1;
+    return sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: 6, status_saat_ini: STAGE_LABELS[6] })
+      .then(function() { return logRiwayat_(idSurat, 5, 'Lanjut', isi, String(versi)); });
+  }).then(function() { afterAksiSukses_(idSurat, 'Telaahan terkirim untuk direview.'); })
+    .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+}
+
+function aksiReview(idSurat, tahap, keputusan) {
+  clearMsg('aksi-msg');
+  var catatan = document.getElementById('aksi-catatan').value;
+  var nextTahap, pesanSukses;
+  if (tahap === 6) {
+    nextTahap = keputusan === 'ACC' ? 7 : 5;
+    pesanSukses = keputusan === 'ACC' ? 'Telaahan diteruskan ke Kepala Bidang.' : 'Telaahan dikembalikan ke Staf.';
+  } else {
+    nextTahap = keputusan === 'ACC' ? 8 : 5;
+    pesanSukses = keputusan === 'ACC' ? 'Telaahan disetujui, lanjut susun SK.' : 'Telaahan dikembalikan ke Staf.';
+  }
+  sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: nextTahap, status_saat_ini: STAGE_LABELS[nextTahap] })
+    .then(function() { return logRiwayat_(idSurat, tahap, keputusan === 'ACC' ? 'Lanjut' : 'Ditolak', catatan); })
+    .then(function() { afterAksiSukses_(idSurat, pesanSukses); })
+    .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+}
+
+function aksiUploadSK(idSurat) {
+  clearMsg('aksi-msg');
+  var linkInput = document.getElementById('aksi-link-sk').value.trim();
+  var fileInput = document.getElementById('aksi-file-sk');
+
+  if (linkInput) {
+    // Gunakan link langsung (misal link Google Drive)
+    sbPatch('surat', 'id_surat=eq.' + idSurat, { tahap_saat_ini: 9, status_saat_ini: STAGE_LABELS[9], link_sk: linkInput })
+      .then(function() { return logRiwayat_(idSurat, 8, 'Selesai', 'SK tersedia di: ' + linkInput); })
+      .then(function() { afterAksiSukses_(idSurat, 'SK berhasil disimpan. Proses selesai.'); })
+      .catch(function(err) { showMsg('aksi-msg', err.message, 'error'); });
+  } else if (fileInput && fileInput.files[0]) {
+    showMsg('aksi-msg', 'Untuk upload file PDF, masukkan link Google Drive SK di kolom yang tersedia, atau gunakan tombol link di atas.', 'info');
+  } else {
+    showMsg('aksi-msg', 'Masukkan link SK atau pilih file PDF.', 'error');
+  }
+}
+
+/* ================================================================
+   KELOLA AKUN (Admin)
+================================================================ */
+function renderUsers() {
+  var roleOpts = DAFTAR_ROLE.map(function(r) { return '<option value="' + r + '">' + r + '</option>'; }).join('');
+  document.getElementById('main-content').innerHTML =
+    '<h1>Kelola Akun Pegawai</h1>' +
+    '<div class="card"><h3>Tambah Akun Baru</h3>' +
+    '<label>Nama</label><input id="u-nama">' +
+    '<label>Username</label><input id="u-username">' +
+    '<label>Password</label><input type="password" id="u-password">' +
+    '<label>Role</label><select id="u-role">' + roleOpts + '</select>' +
+    '<label>Bidang / Sub Bidang (untuk Kabid/Kasubid/Staf)</label><input id="u-bidang">' +
+    '<button class="btn" onclick="onCreateUser()">Tambah Akun</button>' +
+    '<div id="user-msg"></div></div>' +
+    '<div id="user-list">Memuat...</div>';
+  muatDaftarUser_();
+}
+
+function muatDaftarUser_() {
+  sbGet('users', 'select=id_user,nama,username,role,bidang_sub_bidang,status_aktif&order=nama.asc')
+    .then(function(users) {
+      var html = '<div class="card"><table><tr><th>Nama</th><th>Username</th><th>Role</th><th>Bidang</th><th>Status</th><th></th></tr>';
+      (users || []).forEach(function(u) {
+        html += '<tr><td>' + esc(u.nama) + '</td><td>' + esc(u.username) + '</td><td>' + esc(u.role) + '</td><td>' + esc(u.bidang_sub_bidang || '-') + '</td><td>' + esc(u.status_aktif) + '</td>';
+        html += '<td><button class="btn small secondary" onclick="onResetPassword(\'' + u.id_user + '\')">Reset PW</button> ';
+        html += '<button class="btn small ' + (u.status_aktif === 'Aktif' ? 'danger' : 'success') + '" onclick="onToggleActive(\'' + u.id_user + '\',\'' + (u.status_aktif === 'Aktif' ? 'Nonaktif' : 'Aktif') + '\')">' + (u.status_aktif === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan') + '</button></td></tr>';
+      });
+      html += '</table></div>';
+      document.getElementById('user-list').innerHTML = html;
+    }).catch(function(err) { document.getElementById('user-list').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>'; });
+}
+
+function onCreateUser() {
+  clearMsg('user-msg');
+  var nama = document.getElementById('u-nama').value.trim();
+  var username = document.getElementById('u-username').value.trim();
+  var password = document.getElementById('u-password').value;
+  var role = document.getElementById('u-role').value;
+  var bidang = document.getElementById('u-bidang').value.trim();
+  if (!nama || !username || !password || !role) { showMsg('user-msg','Lengkapi semua field.','error'); return; }
+  if (password.length < 6) { showMsg('user-msg','Password minimal 6 karakter.','error'); return; }
+
+  var salt = generateId('SALT');
+  hashPassword(password, salt).then(function(hash) {
+    return sbPost('users', {
+      id_user: generateId('USR'), nama: nama, username: username,
+      password_hash: hash, password_salt: salt, role: role,
+      bidang_sub_bidang: bidang, status_aktif: 'Aktif'
+    });
+  }).then(function() {
+    showMsg('user-msg','Akun berhasil ditambahkan.','success');
+    document.getElementById('u-nama').value = '';
+    document.getElementById('u-username').value = '';
+    document.getElementById('u-password').value = '';
+    document.getElementById('u-bidang').value = '';
+    muatDaftarUser_();
+  }).catch(function(err) { showMsg('user-msg', err.message, 'error'); });
+}
+
+function onToggleActive(idUser, statusBaru) {
+  sbPatch('users', 'id_user=eq.' + idUser, { status_aktif: statusBaru }).then(muatDaftarUser_).catch(function(err) { alert(err.message); });
+}
+
+function onResetPassword(idUser) {
+  var pw = prompt('Masukkan password baru (minimal 6 karakter):');
+  if (!pw || pw.length < 6) { alert('Password minimal 6 karakter.'); return; }
+  var salt = generateId('SALT');
+  hashPassword(pw, salt).then(function(hash) {
+    return sbPatch('users', 'id_user=eq.' + idUser, { password_hash: hash, password_salt: salt });
+  }).then(function() { alert('Password berhasil direset.'); }).catch(function(err) { alert(err.message); });
+}
+
+/* ================================================================
+   CEK KONSISTENSI BIDANG (Admin)
+================================================================ */
+function renderKonsistensi() {
+  document.getElementById('main-content').innerHTML =
+    '<h1>Cek Konsistensi Nama Bidang</h1>' +
+    '<p style="color:var(--muted);font-size:13px;">Periksa akun pegawai dan berkas yang merujuk ke nama bidang yang sudah tidak ada di MasterBidang.</p>' +
+    '<div id="audit-body">Memuat...</div>';
+  muatAudit_();
+}
+
+function muatAudit_() {
+  Promise.all([
+    sbGet('master_bidang', 'select=bidang,sub_bidang'),
+    sbGet('users', 'select=nama,username,role,bidang_sub_bidang&status_aktif=eq.Aktif'),
+    sbGet('surat', 'tahap_saat_ini=lt.9&select=no_tracking,tahap_saat_ini,bidang_tujuan,sub_bidang_tujuan')
+  ]).then(function(results) {
+    var master = results[0] || [], users = results[1] || [], surats = results[2] || [];
+    var validBidang = {}, validSub = {};
+    master.forEach(function(m) { if (m.bidang) validBidang[m.bidang.trim()] = true; if (m.sub_bidang) validSub[m.sub_bidang.trim()] = true; });
+
+    var userMasalah = users.filter(function(u) {
+      if (!u.bidang_sub_bidang) return false;
+      var v = u.bidang_sub_bidang.trim();
+      if (u.role === 'Kabid') return !validBidang[v];
+      if (u.role === 'Kasubid' || u.role === 'Staf') return !validSub[v];
+      return false;
+    });
+    var suratMasalah = [];
+    surats.forEach(function(s) {
+      if (s.bidang_tujuan && !validBidang[s.bidang_tujuan.trim()]) suratMasalah.push({ no_tracking: s.no_tracking, tahap: s.tahap_saat_ini, kolom: 'bidang_tujuan', nilai: s.bidang_tujuan });
+      if (s.sub_bidang_tujuan && !validSub[s.sub_bidang_tujuan.trim()]) suratMasalah.push({ no_tracking: s.no_tracking, tahap: s.tahap_saat_ini, kolom: 'sub_bidang_tujuan', nilai: s.sub_bidang_tujuan });
+    });
+
+    var html = '';
+    if (!userMasalah.length && !suratMasalah.length) {
+      html = '<div class="msg success">Tidak ditemukan ketidakcocokan. Semua akun dan berkas sesuai dengan MasterBidang saat ini.</div>';
+    } else {
+      if (userMasalah.length) {
+        html += '<div class="card"><h3>Akun dengan Bidang Tidak Valid (' + userMasalah.length + ')</h3><table><tr><th>Nama</th><th>Role</th><th>Nilai Saat Ini</th></tr>';
+        userMasalah.forEach(function(u) { html += '<tr><td>' + esc(u.nama) + '</td><td>' + esc(u.role) + '</td><td style="color:var(--danger);">' + esc(u.bidang_sub_bidang) + '</td></tr>'; });
+        html += '</table></div>';
+      }
+      if (suratMasalah.length) {
+        html += '<div class="card"><h3>Berkas dengan Bidang Tidak Valid (' + suratMasalah.length + ')</h3><table><tr><th>No. Tracking</th><th>Kolom</th><th>Nilai Saat Ini</th></tr>';
+        suratMasalah.forEach(function(s) { html += '<tr><td>' + esc(s.no_tracking) + '</td><td>' + esc(s.kolom) + '</td><td style="color:var(--danger);">' + esc(s.nilai) + '</td></tr>'; });
+        html += '</table></div>';
+      }
+    }
+    html += '<div class="card"><h3>Nama Valid (dari MasterBidang)</h3><p><strong>Bidang:</strong> ' + Object.keys(validBidang).map(esc).join(', ') + '</p><p><strong>Sub Bidang:</strong> ' + Object.keys(validSub).map(esc).join(', ') + '</p></div>';
+    document.getElementById('audit-body').innerHTML = html;
+  }).catch(function(err) { document.getElementById('audit-body').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>'; });
+}
+
+/* ================================================================
+   GANTI PASSWORD
+================================================================ */
+function renderGantiPassword() {
+  document.getElementById('main-content').innerHTML =
+    '<h1>Ganti Password</h1><div class="card" style="max-width:380px;">' +
+    '<label>Password Lama</label><input type="password" id="pw-lama">' +
+    '<label>Password Baru</label><input type="password" id="pw-baru">' +
+    '<button class="btn" onclick="onGantiPassword()">Simpan Password Baru</button>' +
+    '<div id="pw-msg"></div></div>';
+}
+
+function onGantiPassword() {
+  clearMsg('pw-msg');
+  var lama = document.getElementById('pw-lama').value;
+  var baru = document.getElementById('pw-baru').value;
+  if (!lama || !baru) { showMsg('pw-msg','Semua kolom wajib diisi.','error'); return; }
+  if (baru.length < 6) { showMsg('pw-msg','Password baru minimal 6 karakter.','error'); return; }
+
+  var user = STATE.session.user;
+  sbGet('users', 'id_user=eq.' + user.id_user + '&select=password_hash,password_salt').then(function(rows) {
+    if (!rows || !rows.length) throw new Error('Pengguna tidak ditemukan.');
+    return hashPassword(lama, rows[0].password_salt).then(function(hash) {
+      if (hash !== rows[0].password_hash) throw new Error('Password lama salah.');
+      var salt = generateId('SALT');
+      return hashPassword(baru, salt).then(function(newHash) {
+        return sbPatch('users', 'id_user=eq.' + user.id_user, { password_hash: newHash, password_salt: salt });
+      });
+    });
+  }).then(function() { showMsg('pw-msg','Password berhasil diganti.','success'); document.getElementById('pw-lama').value = ''; document.getElementById('pw-baru').value = ''; })
+    .catch(function(err) { showMsg('pw-msg', err.message, 'error'); });
+}
+</script>
+</body>
+</html>
