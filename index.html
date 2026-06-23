@@ -429,7 +429,9 @@ function renderHasilCekStatus(surat, riwayat) {
   html += '<p>Perihal: ' + esc(surat.tujuan_layanan) + '<br>Tanggal masuk: ' + fmtTanggal(surat.tanggal_masuk) + '</p>';
   html += '<p>Status saat ini: ' + badge(surat.tahap_saat_ini, surat.status_saat_ini) + '</p>';
   if (Number(surat.tahap_saat_ini) === 9) {
-    html += '<div class="msg success">Surat Keputusan (SK) Anda telah selesai dan dapat diambil langsung di kantor Bapenda.</div>';
+    html += '<div class="msg success">Surat Keputusan (SK) Anda telah selesai dan dapat diambil langsung di kantor Bapenda.' +
+      (surat.link_sk ? ' <a href="' + esc(surat.link_sk) + '" target="_blank" style="color:var(--success);font-weight:500;text-decoration:underline;">Klik di sini untuk membuka SK <i class="ti ti-external-link" style="font-size:12px;vertical-align:-1px;"></i></a>' : '') +
+      '</div>';
   }
   html += '<h3 style="margin-top:18px;">Riwayat Proses</h3><ul class="timeline">';
   riwayat.forEach(function(r) {
