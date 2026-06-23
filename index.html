@@ -776,7 +776,7 @@ function buildDetailHtml(surat, riwayat) {
   html += '<p>NOP: ' + esc(surat.nop) + '<br>Alamat: ' + esc(surat.alamat) + '<br>No. HP: ' + esc(surat.no_hp) + '</p>';
   html += '<p>Tujuan Layanan: ' + esc(surat.tujuan_layanan) + '<br>Perihal: ' + esc(surat.perihal || '-') + '</p>';
   html += '<p>Status: ' + badge(surat.tahap_saat_ini, surat.status_saat_ini) + '</p>';
-  if (surat.link_sk) html += '<p><a href="' + esc(surat.link_sk) + '" target="_blank">Lihat berkas SK</a></p>';
+  if (surat.link_sk) html += '<p>Berkas SK: <a href="' + esc(surat.link_sk) + '" target="_blank" style="color:var(--primary);text-decoration:underline;">Klik di sini untuk membuka SK <i class="ti ti-external-link" style="font-size:13px;vertical-align:-1px;"></i></a></p>';
   html += '</div>';
   html += '<div class="card" id="aksi-wrap">' + buildFormAksi(surat) + '</div>';
   html += '<div class="card"><h3>Riwayat Lengkap</h3><ul class="timeline">';
