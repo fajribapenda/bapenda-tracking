@@ -413,7 +413,7 @@ function onCekStatus() {
     .then(function(rows) {
       if (!rows || !rows.length) throw new Error('Data tidak ditemukan. Periksa kembali nomor tracking dan NOP Anda.');
       var surat = rows[0];
-      return sbGet('riwayat_disposisi', 'id_surat=eq.' + surat.id_surat + '&order=waktu_aksi.asc').then(function(riwayat) {
+      return sbGet('riwayat_disposisi', 'id_surat=eq.' + surat.id_surat + '&order=waktu_aksi.desc').then(function(riwayat) {
         setBusy(btn, false, 'Cek Status');
         renderHasilCekStatus(surat, riwayat || []);
       });
@@ -758,7 +758,7 @@ function renderDetail(idSurat) {
   document.getElementById('main-content').innerHTML = '<h1>Detail Berkas</h1><div id="detail-body">Memuat data...</div>';
   Promise.all([
     sbGet('surat', 'id_surat=eq.' + idSurat),
-    sbGet('riwayat_disposisi', 'id_surat=eq.' + idSurat + '&order=waktu_aksi.asc')
+    sbGet('riwayat_disposisi', 'id_surat=eq.' + idSurat + '&order=waktu_aksi.desc')
   ]).then(function(results) {
     var surat = results[0][0];
     var riwayat = results[1] || [];
